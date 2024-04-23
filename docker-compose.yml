@@ -1,0 +1,45 @@
+version: '3.7'
+
+services:
+  cassandra:
+    image: cassandra:latest
+    container_name: cassandra
+    environment:
+      - CASSANDRA_CLUSTER_NAME=${CASSANDRA_CLUSTER_NAME}
+      - CASSANDRA_DC=myDC
+      - CASSANDRA_RACK=myRack
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_PASSWORD_SEEDER=yes  # Ensures the password is set only on the first run
+      - CASSANDRA_PASSWORD=${CASSANDRA_PASSWORD}   # Default password, change as needed
+    volumes:
+      - ./cassandra_data:/var/lib/cassandra  # Maps local directory to Cassandra data directory
+    ports:
+      - "9042:9042"  # Maps Cassandra's default CQL port to the host
+    networks:
+      - cassandra
+    healthcheck:
+      test: ["CMD", "cqlsh", "-u", "cassandra", "-p", "cassandra", "-e", "DESCRIBE KEYSPACES"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"  # Maps Redis's default port to the host
+    networks:
+      - cassandra
+    volumes:
+      - ./redis_data:/data  # Maps local directory to Redis data directory, for persistence
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  cassandra:
+    name: cassandra
+    driver: bridge
+
