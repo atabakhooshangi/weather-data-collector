@@ -2,8 +2,6 @@ import os
 import collections
 from session import db_session
 from contextlib import asynccontextmanager
-from cassandra.query import SimpleStatement, BatchStatement
-import asyncio
 from cassandra.concurrent import execute_concurrent_with_args
 import aiohttp
 from dotenv import load_dotenv
@@ -41,7 +39,7 @@ async def date_to_timestamp(date_str):
     return datetime.datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S.%f').timestamp()
 
 
-async def transform2(data:dict):
+async def transform2(data: dict):
     # Dictionary to hold sum of values and count of entries for each day
     daily_values = collections.defaultdict(lambda: {'sum': 0, 'count': 0})
 
@@ -52,7 +50,7 @@ async def transform2(data:dict):
         value = float(value)
         year, month, d_day = await parse_date_parts(entry['date'])
         date = datetime.datetime.strptime(entry['date'], '%Y-%m-%d %H:%M:%S.%f')
-        day = datetime.datetime(date.year, date.month, date.day,12).timestamp() * 1000
+        day = datetime.datetime(date.year, date.month, date.day, 12).timestamp() * 1000
         daily_values[day]['year'] = year
         daily_values[day]['month'] = month
         daily_values[day]['day'] = d_day
@@ -64,12 +62,12 @@ async def transform2(data:dict):
     return daily_averages
 
 
-async def transform(data:dict):
+async def transform(data: dict):
     try:
-        for k,v in data.items():
+        for k, v in data.items():
             v['year'], v['month'], v['day'] = await parse_date_parts(v['date'])
             v['date'] = await date_to_timestamp(v['date'])
-            v['value'] = float(v['value']) if v['value'] is  not None else None
+            v['value'] = float(v['value']) if v['value'] is not None else None
         return data
     except Exception as e:
         raise e
@@ -101,23 +99,25 @@ async def transform(data:dict):
 #
 #     return
 
-async def load_to_db(data: dict, variable: str, station_id: str, station_name: str):
+async def load_to_db(data: dict, variable: str, station_id: str, station_eovx: str, station_eovy: str, station_name: str):
     async with asynccontextmanager(db_session)() as session:
         insert_stmt = session.prepare("""
-            INSERT INTO weather_data (station_id, station_name, variable, year, month, day, timestamp, value)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO weather_data (station_id, station_name,station_eovx , station_eovy, variable, year, month, day, timestamp, value)
+            VALUES (?, ? ,?, ?, ?, ?, ?, ?, ?, ?)
         """)
         batch = []
         for record in data:
             # timestamp = datetime.datetime.strptime(record["timestamp"], "%Y-%m-%d %H:%M:%S")
-            batch.append((station_id, station_name, variable, record['year'], record['month'], record['day'], record['timestamp'], record["avg_val"]))
+            batch.append((station_id, station_name, station_eovx, station_eovy, variable, record['year'], record['month'], record['day'], record['timestamp'], record["avg_val"]))
 
             if len(batch) >= 300:  # Check if the batch size is large enough to send
+                # print(batch,'\n\n\n')
                 await execute_batch(session, insert_stmt, batch)
                 batch = []  # Resetting the batch after execution
 
         if batch:
             await execute_batch(session, insert_stmt, batch)
+
 
 async def execute_batch(session, statement, batch):
     # Execute the batch concurrently and await its completion

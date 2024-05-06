@@ -42,7 +42,9 @@ def create_table(session):
     cql_table = """
     CREATE TABLE IF NOT EXISTS weather_data (
         station_id text,
-        station_name text,
+        station_name text STATIC,
+        station_eovx text,
+        station_eovy text,
         variable text,
         timestamp timestamp,
         year int,

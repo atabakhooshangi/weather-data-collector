@@ -1,9 +1,7 @@
 import os
 import asyncio
-from etl import fetch_data, load_to_db , transform , transform2
-from contextlib import asynccontextmanager
+from etl import fetch_data, load_to_db , transform2
 import datetime
-import time
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -25,8 +23,9 @@ async def main():
                     variables_data[var['varid']] = var['name']
 
         stations = await fetch_data({'view': 'getstations'})
+        station_1 = 0
         for station in stations['entries']:
-            start_from = datetime.date.today() - datetime.timedelta(int(os.environ.get('START_FROM')) * 365)
+            start_from = datetime.date.today() - datetime.timedelta(int(os.environ.get('START_FROM')))
             for var_id, var_name in variables_data.items():
                 payload = {
                     'view': 'getmeas',
@@ -38,8 +37,13 @@ async def main():
                 response = await fetch_data(payload)
                 data = response['entries'][0]
                 transformed_data = await transform2(data)
-                await load_to_db(transformed_data,var_name,station['statid'],station['name'])
+                await load_to_db(transformed_data,var_name,station['statid'],station['eovx'],station['eovy'],station['name'])
                 await asyncio.sleep(0.5)
+                break
+            station_1 += 1
+            if station_1 == 2:
+                break
+        break
 
 
 
