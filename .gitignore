@@ -167,3 +167,6 @@ redis_data/
 cassandra_data/
 
 csv_store/
+
+.python-version
+.venv
