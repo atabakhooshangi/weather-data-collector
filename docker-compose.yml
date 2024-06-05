@@ -23,20 +23,20 @@ services:
       timeout: 10s
       retries: 5
 
-  redis:
-    image: redis:latest
-    container_name: redis
-    ports:
-      - "6379:6379"  # Maps Redis's default port to the host
-    networks:
-      - cassandra
-    volumes:
-      - ./redis_data:/data  # Maps local directory to Redis data directory, for persistence
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+#  redis:
+#    image: redis:latest
+#    container_name: redis
+#    ports:
+#      - "6379:6379"  # Maps Redis's default port to the host
+#    networks:
+#      - cassandra
+#    volumes:
+#      - ./redis_data:/data  # Maps local directory to Redis data directory, for persistence
+#    healthcheck:
+#      test: [ "CMD", "redis-cli", "ping" ]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
 
 networks:
   cassandra:
