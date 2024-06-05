@@ -1,6 +1,7 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+.python-version
 *$py.class
 .idea
 # C extensions
@@ -167,6 +168,3 @@ redis_data/
 cassandra_data/
 
 csv_store/
-
-.python-version
-.venv
